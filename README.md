@@ -75,13 +75,15 @@ An end-to-end, interpretable deep learning framework for automated sleep staging
 
 ```
 .
+├── app.py                 # Interactive Streamlit Web Application & Clinical Dashboard
 ├── data_generator.py      # Multi-channel synthetic EEG generator with AASM transients
 ├── model.py               # 1D-CNN + BiLSTM + Temporal Attention PyTorch implementation
 ├── explainability.py      # Attention extraction, STFT decomposition & clinical narrative
 ├── main.py                # Interactive CLI & automated training/evaluation pipeline
-├── requirements.txt       # Python dependencies
+├── requirements.txt       # Python dependencies (includes streamlit)
 ├── README.md              # Project documentation & user guide
 ├── PROJECT_REPORT.md      # Full academic research paper and technical report
+├── PROJECT_REPORT_YOGESH_25BTRCM058.pdf # Complete 65-page formatted university project report
 └── outputs/               # Saved figures, heatmaps, and evaluation metrics (auto-generated)
     ├── training_curves.png
     ├── confusion_matrix.png
@@ -108,7 +110,22 @@ pip install -r requirements.txt
 
 *(Note: PyTorch with CUDA support is automatically utilized if a compatible GPU is detected; otherwise, it executes efficiently on CPU).*
 
-### 2. Interactive CLI Mode
+### 2. Streamlit Web Application (Interactive Clinical Dashboard)
+
+Launch the modern browser-based web application:
+
+```bash
+streamlit run app.py
+```
+
+The web dashboard opens automatically in your browser (usually at `http://localhost:8501`) and features:
+- **🔬 Single Epoch Live Diagnostic**: Simulate or upload 30s EEG epochs (Wake, N1, N2, N3, REM), execute real-time model inference, view synchronized multi-channel EEG leads, continuous STFT spectrograms, and temporal attention heatmap ribbons.
+- **📈 Explainability & Attribution**: Inspect relative power contributions ($\delta, \theta, \alpha, \beta$), identify salient neurophysiological micro-events (Sleep Spindles, K-Complexes, Vertex Waves), and generate formatted AASM clinical narratives.
+- **📊 Cohort Evaluation & Metrics**: Run multi-sample cohort tests to render normalized confusion matrices and precision/recall/F1-score tables.
+- **🧠 Model Architecture & Math**: Review equations for self-attention, BiLSTM contextualization, and STFT-weighted band importance.
+- **📥 Direct Download**: One-click download of the complete 65-page academic project report PDF (`PROJECT_REPORT_YOGESH_25BTRCM058.pdf`) and individual clinical text summaries.
+
+### 3. Interactive CLI Mode
 
 Launch the menu-driven command-line interface:
 
