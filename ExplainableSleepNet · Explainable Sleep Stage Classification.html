@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ExplainableSleepNet · Explainable Sleep Stage Classification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Google+Sans+Code&display=swap">
+<style>
+:root{--bg:#fff;--surf:#f8f9fa;--card:#fff;--tx:#202124;--tx2:#5f6368;--line:#dadce0;--blue:#1a73e8;--red:#ea4335;--yel:#f9ab00;--grn:#188038;--blue-s:#e8f0fe;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#202124;--surf:#292a2d;--card:#2d2e31;--tx:#e8eaed;--tx2:#9aa0a6;--line:#3c4043;--blue:#8ab4f8;--blue-s:#2b3a55;--grn:#81c995}}
+:root[data-theme="dark"]{--bg:#202124;--surf:#292a2d;--card:#2d2e31;--tx:#e8eaed;--tx2:#9aa0a6;--line:#3c4043;--blue:#8ab4f8;--blue-s:#2b3a55;--grn:#81c995}
+html{scroll-behavior:smooth;scroll-padding-top:calc(72px + env(safe-area-inset-top,0px))}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:400 16px/1.6 Roboto,Arial,sans-serif}
+a{color:var(--blue);text-decoration:none}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 24px;height:64px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:30}
+.logo{font:500 20px Roboto;display:flex;align-items:center;gap:10px;color:var(--tx)}
+.dots i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:3px}
+nav{margin-left:auto;display:flex;gap:4px;overflow-x:auto}
+nav a{color:var(--tx2);padding:8px 14px;border-radius:20px;font-size:14px;font-weight:500;white-space:nowrap}
+nav a:hover{background:var(--surf)}nav a.on{color:var(--blue);background:var(--blue-s)}
+button{font:inherit;cursor:pointer}
+.ic{border:0;background:none;color:var(--tx2);width:40px;height:40px;border-radius:50%;font-size:18px}.ic:hover{background:var(--surf)}
+.btn{display:inline-block;padding:10px 24px;border-radius:24px;font-weight:500;font-size:14px;border:1px solid var(--line);color:var(--blue);background:var(--bg)}
+.btn.p{background:var(--blue);color:#fff;border-color:var(--blue)}:root[data-theme="dark"] .btn.p{color:#202124}
+.btn:hover{box-shadow:0 1px 3px rgba(60,64,67,.3)}
+section{max-width:1100px;margin:0 auto;padding:72px 24px}
+h1{font:400 clamp(34px,6vw,56px)/1.15 Roboto;margin:0 0 20px;letter-spacing:-.5px}
+h2{font:400 32px/1.3 Roboto;margin:0 0 8px}h3{font:500 18px Roboto;margin:0 0 6px}
+.lead{color:var(--tx2);font-size:18px;max-width:760px}
+.hero{text-align:center;padding-top:88px}.hero .lead{margin:0 auto 32px}
+.chip{display:inline-block;padding:4px 14px;border-radius:16px;background:var(--blue-s);color:var(--blue);font-size:13px;font-weight:500;margin-bottom:20px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-top:32px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;transition:box-shadow .2s,transform .2s}
+.card:hover{box-shadow:0 2px 8px rgba(60,64,67,.25);transform:translateY(-2px)}
+.card p{margin:0;color:var(--tx2);font-size:14px}
+.stat b{display:block;font:400 40px Roboto;color:var(--blue)}.stat span{color:var(--tx2);font-size:14px}
+.alt{background:var(--surf)}.alt>div{max-width:1100px;margin:0 auto;padding:72px 24px}
+.alt section{padding:0}
+table{width:100%;border-collapse:collapse;font-size:14px;background:var(--card);border-radius:12px;overflow:hidden}
+th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line)}th{color:var(--tx2);font-weight:500;background:var(--surf)}
+tr.hl td{background:var(--blue-s);font-weight:500}
+.scroll{overflow-x:auto;margin-top:24px;border:1px solid var(--line);border-radius:12px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:24px 0 16px}
+.tab{padding:8px 20px;border-radius:20px;border:1px solid var(--line);background:var(--bg);color:var(--tx);font-size:14px;font-weight:500}
+.tab.on{background:var(--blue);color:#fff;border-color:var(--blue)}:root[data-theme="dark"] .tab.on{color:#202124}
+canvas{width:100%;height:240px;display:block;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.bar{display:grid;grid-template-columns:70px 1fr 56px;gap:12px;align-items:center;margin:10px 0;font-size:14px}
+.bar div{height:12px;background:var(--line);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--blue);border-radius:6px;transition:width .6s}
+.flow{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch;margin-top:28px}
+.node{flex:1 1 150px;background:var(--card);border:1px solid var(--line);border-top:4px solid var(--blue);border-radius:12px;padding:14px;font-size:13px;color:var(--tx2)}
+.node b{display:block;color:var(--tx);font-size:14px}.node:nth-child(2){border-top-color:var(--red)}.node:nth-child(3){border-top-color:var(--yel)}.node:nth-child(4){border-top-color:var(--grn)}.node:nth-child(5){border-top-color:#a142f4}
+pre{background:#202124;color:#e8eaed;padding:20px;border-radius:12px;overflow-x:auto;font:13px/1.6 "Google Sans Code",monospace;margin:0}
+.k{color:#8ab4f8}.s{color:#81c995}.c{color:#9aa0a6}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:24px}@media(max-width:800px){.two{grid-template-columns:1fr}nav{display:none}}
+details{border-bottom:1px solid var(--line);padding:14px 0}summary{cursor:pointer;font-weight:500}details p{color:var(--tx2);margin:8px 0 0}
+footer{border-top:1px solid var(--line);padding:32px 24px;text-align:center;color:var(--tx2);font-size:14px;background:var(--surf)}
+.reveal{opacity:0;transform:translateY(24px);transition:.6s}.reveal.in{opacity:1;transform:none}
+#prog{position:fixed;top:env(safe-area-inset-top,0px);left:0;height:3px;background:var(--blue);width:0;z-index:40}
+#pal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:flex;justify-content:center;padding-top:15vh}#pal[hidden]{display:none}
+.pbox{width:min(560px,92vw);background:var(--card);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.4);overflow:hidden;align-self:flex-start}
+#pi{width:100%;border:0;border-bottom:1px solid var(--line);padding:18px 20px;font:inherit;font-size:17px;background:transparent;color:var(--tx);outline:0}
+.pit{padding:12px 20px;cursor:pointer;display:flex;justify-content:space-between;font-size:15px}.pit.on,.pit:hover{background:var(--blue-s)}.pit small{color:var(--tx2)}
+input[type=range]{width:100%;accent-color:var(--blue)}
+.mini{display:flex;gap:8px;margin:10px 0;align-items:center;flex-wrap:wrap}
+.cm{display:grid;grid-template-columns:64px repeat(5,1fr);gap:4px;margin-top:16px;font-size:13px;text-align:center}.cm div{padding:14px 4px;border-radius:6px}.cm .h{color:var(--tx2);font-weight:500}
+.gauge{height:18px;background:var(--line);border-radius:9px;overflow:hidden;margin:10px 0}.gauge i{display:block;height:100%;background:linear-gradient(90deg,var(--red),var(--yel),var(--grn));transition:width .3s}
+.tab.ok{background:var(--grn);color:#fff;border-color:var(--grn)}.tab.bad{background:var(--red);color:#fff;border-color:var(--red)}
+.tg{display:grid;grid-template-columns:repeat(23,1fr);gap:4px;margin:14px 0}.tk{height:38px;border-radius:6px;cursor:pointer;border:1px solid var(--line);transition:.15s}.tk:hover{transform:scale(1.15)}.tk.m{outline:2px dashed var(--tx);opacity:.3}
+.node{transition:.3s}.node.act{box-shadow:0 0 0 2px var(--blue);transform:translateY(-4px);color:var(--tx)}
+.row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+kbd{background:var(--surf);border:1px solid var(--line);border-radius:4px;padding:1px 6px;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+<a class="logo" href="#top"><span class="dots"><i style="background:#4285f4"></i><i style="background:#ea4335"></i><i style="background:#fbbc04"></i><i style="background:#34a853"></i></span>SleepNet</a>
+<nav id="nav"><a href="#overview">Overview</a><a href="#architecture">Architecture</a><a href="#demo">Interactive demo</a><a href="#lab">Lab</a><a href="#play">Playground</a><a href="#results">Results</a><a href="#code">Code</a><a href="#report">Report</a></nav>
+<button class="ic" id="sb" title="Search (Ctrl+K)" aria-label="Search">⌕</button><button class="ic" id="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+</header>
+
+<div id="prog"></div>
+<div id="pal" hidden><div class="pbox"><input id="pi" placeholder="Search sections and actions…" autocomplete="off"><div id="pl"></div></div></div>
+<main id="top">
+<section class="hero">
+<span class="chip">25PCCS202 · Python Programming · Jain University</span>
+<h1>Sleep staging you can <span style="color:var(--blue)">actually trust</span></h1>
+<p class="lead">An explainable deep learning framework that classifies sleep stages from EEG signals and shows exactly which seconds and which frequency bands drove each decision.</p>
+<a class="btn p" href="https://github.com/yogesh07071-netizen/yogesh" target="_blank" rel="noopener">View on GitHub</a>
+<a class="btn" href="#demo">Try the demo</a>
+<div class="grid" style="margin-top:56px">
+<div class="card stat"><b data-n="95.0" data-d="1" data-s="%">0</b><span>Test accuracy</span></div>
+<div class="card stat"><b data-n="0.950" data-d="3">0</b><span>Macro F1-score</span></div>
+<div class="card stat"><b data-n="0.938" data-d="3">0</b><span>Cohen’s Kappa (κ)</span></div>
+<div class="card stat"><b data-n="46" data-d="0">0</b><span>Attention tokens per epoch</span></div>
+</div>
+</section>
+
+<div class="alt"><div><section id="overview" style="padding:0">
+<h2 class="reveal">The problem</h2>
+<p class="lead reveal">Scoring one night of polysomnography takes up to three hours, and human experts disagree 18–25% of the time. Deep networks match experts, but their black-box output gives clinicians nothing to audit.</p>
+<div class="grid">
+<div class="card reveal"><h3>Multi-scale 1D-CNN</h3><p>Parallel kernels (k=7 and k=31) capture fast spindles and slow delta waves together.</p></div>
+<div class="card reveal"><h3>BiLSTM context</h3><p>Forward and backward memory models dependencies across 46 sub-windows of each epoch.</p></div>
+<div class="card reveal"><h3>Temporal self-attention</h3><p>Learned weights αt pinpoint which seconds of the 30 s epoch drove the prediction.</p></div>
+<div class="card reveal"><h3>STFT band attribution</h3><p>Attention is projected onto spectrograms to give Delta, Theta, Alpha and Beta contributions.</p></div>
+<div class="card reveal"><h3>Clinical narrative</h3><p>Auto-generated, AASM-aligned text report ready for a medical chart entry.</p></div>
+<div class="card reveal"><h3>Faithfulness tested</h3><p>Top-k deletion tests show attention is causally linked to the output, not decoration.</p></div>
+</div></section></div></div>
+
+<section id="architecture">
+<h2 class="reveal">Five-stage pipeline</h2>
+<p class="lead reveal">From a raw 3-channel, 30-second epoch (Fpz-Cz, Pz-Oz, EOG at 100 Hz) to an auditable diagnosis.</p>
+<div class="flow reveal">
+<div class="node"><b>1 · Acquire</b>3 × 3000 samples per epoch</div>
+<div class="node"><b>2 · Filter</b>Butterworth 0.5–40 Hz, zero-phase, Z-score</div>
+<div class="node"><b>3 · Multi-scale CNN</b>Fine k=7 + coarse k=31 → 46 × 128</div>
+<div class="node"><b>4 · BiLSTM + attention</b>Logits (5) and weights αt (46)</div>
+<div class="node"><b>5 · Explain</b>STFT bands, peak time, narrative</div>
+</div>
+<div class="two" style="margin-top:32px">
+<div class="card"><h3>Attention mechanism</h3><p>u<sub>t</sub> = tanh(W<sub>a</sub>h<sub>t</sub> + b<sub>a</sub>)<br>α<sub>t</sub> = softmax(u<sub>t</sub>ᵀv<sub>a</sub>), Σα<sub>t</sub> = 1<br>c = Σ α<sub>t</sub>h<sub>t</sub></p></div>
+<div class="card"><h3>Band importance</h3><p>S<sub>b</sub> = Σ<sub>m</sub> α̃(t<sub>m</sub>)·E<sub>b</sub>(t<sub>m</sub>)<br>Importance(b) = S<sub>b</sub> / Σ S<sub>b′</sub> × 100%</p></div>
+</div>
+</section>
+
+<div class="alt"><div><section id="demo" style="padding:0">
+<h2>Interactive explainability demo</h2>
+<p class="lead">A simulated illustration of what the model reports for each AASM stage. Pick a stage to see the EEG, the attention ribbon and band attribution.</p>
+<div class="tabs" id="tabs"></div>
+<canvas id="cv" width="1000" height="240"></canvas>
+<div class="two" style="margin-top:20px">
+<div><h3>Band attribution</h3><div id="bands"></div></div>
+<div class="card"><h3 id="pred"></h3><p id="narr"></p></div>
+</div>
+</section></div></div>
+
+<section id="lab">
+<h2 class="reveal">Experiment lab</h2>
+<p class="lead reveal">Drag the controls to explore the robustness and faithfulness numbers reported in the study. Tip: press <kbd>Ctrl</kbd>+<kbd>K</kbd> for the command palette, or <kbd>1</kbd>–<kbd>5</kbd> to switch demo stages.</p>
+<div class="two" style="margin-top:28px">
+<div class="card"><h3>Noise robustness</h3><p>Inject muscular noise and see accuracy interpolated from the SNR benchmark.</p>
+<div class="mini"><span>Noise:</span><b id="nv"></b></div><input type="range" id="noise" min="0" max="50" value="0">
+<canvas id="cn" width="600" height="160" style="height:160px;margin-top:12px"></canvas><p id="nres" style="margin-top:10px"></p></div>
+<div class="card"><h3>Deletion faithfulness test</h3><p>Mask the top-k tokens and watch the true-class probability fall.</p>
+<div class="mini"><button class="tab on" id="m1">Attention-guided</button><button class="tab" id="m2">Random control</button></div>
+<div class="mini"><span>Tokens masked:</span><b id="kv"></b></div><input type="range" id="kk" min="0" max="5" value="0">
+<div class="gauge"><i id="pb"></i></div><p id="pt"></p></div>
+</div>
+<h3 style="margin-top:36px">Confusion matrix (% of true class)</h3>
+<p class="lead" style="font-size:14px">Reconstructed from the per-stage recalls in the report; hover a cell.</p>
+<div class="cm" id="cm"></div><p id="ct" style="color:var(--tx2);min-height:24px"></p>
+</section>
+
+<div class="alt"><div><section id="play" style="padding:0">
+<h2>Playground</h2>
+<p class="lead">Design the filter, test yourself against the network, mask tokens and run a step-by-step inference.</p>
+<div class="two" style="margin-top:28px">
+<div class="card"><h3>Butterworth filter designer</h3><p>Drag the cut-offs and see the frequency response (4th-order bandpass).</p>
+<div class="mini"><span>Low cut</span><b id="flv"></b></div><input type="range" id="fl" min="0.1" max="5" step="0.1" value="0.5">
+<div class="mini"><span>High cut</span><b id="fhv"></b></div><input type="range" id="fh" min="20" max="49" step="1" value="40">
+<label class="mini"><input type="checkbox" id="fz" checked> Zero-phase (filtfilt, doubles dB)</label>
+<canvas id="cf" width="600" height="200" style="height:200px"></canvas><p id="fres" style="margin-top:10px"></p></div>
+<div class="card"><h3>Can you beat the model?</h3><p>Guess the sleep stage from the raw EEG trace.</p>
+<canvas id="cq" width="600" height="180" style="height:180px;margin:12px 0"></canvas>
+<div class="tabs" id="qo" style="margin:8px 0"></div><p id="qf" style="min-height:48px"></p>
+<div class="row"><b id="qs">Score 0/0 · streak 0</b><button class="btn" id="qn">Next epoch</button></div></div>
+</div>
+<div class="card" style="margin-top:24px"><h3>Token masking explorer</h3>
+<p>46 attention tokens for the stage chosen in the demo above. Click tokens to mask them (red = high attention), or let the tool pick the top three.</p>
+<div class="tg" id="tg"></div>
+<div class="row"><span id="ti"></span><span><button class="tab" id="mt3">Mask top-3</button> <button class="tab" id="mr">Reset</button></span></div></div>
+<div class="card" style="margin-top:24px"><div class="row"><h3>Step-by-step inference</h3><button class="btn p" id="run">Run inference</button></div>
+<div class="flow" id="pf"></div><p id="pr" style="margin-top:16px;color:var(--tx2)">Press Run to animate the pipeline for the selected stage.</p></div>
+</section></div></div>
+
+<section id="results">
+<h2 class="reveal">Results</h2>
+<p class="lead reveal">Stratified 5-fold cross-validation on 400 balanced epochs (80 per stage).</p>
+<div class="scroll reveal"><table>
+<tr><th>Model</th><th>Accuracy</th><th>Macro F1</th><th>κ</th><th>Latency</th></tr>
+<tr><td>Standard 1D-CNN</td><td>83.50%</td><td>0.832</td><td>0.793</td><td>8.2 ms</td></tr>
+<tr><td>Unidirectional LSTM</td><td>81.25%</td><td>0.808</td><td>0.765</td><td>14.6 ms</td></tr>
+<tr><td>BiLSTM</td><td>86.75%</td><td>0.865</td><td>0.834</td><td>18.1 ms</td></tr>
+<tr><td>CNN + BiLSTM (avg pool)</td><td>90.25%</td><td>0.901</td><td>0.878</td><td>19.4 ms</td></tr>
+<tr class="hl"><td>ExplainableSleepNet (proposed)</td><td>95.00%</td><td>0.950</td><td>0.938</td><td>21.2 ms</td></tr>
+</table></div>
+<div class="two" style="margin-top:32px">
+<div><h3>Accuracy by model</h3><canvas id="c1" width="500" height="260"></canvas></div>
+<div><h3>Faithfulness: probability drop when masking</h3><canvas id="c2" width="500" height="260"></canvas></div>
+</div>
+<div class="scroll reveal"><table>
+<tr><th>Ablation</th><th>Accuracy change</th><th>Finding</th></tr>
+<tr><td>Remove fine branch</td><td>−5.75%</td><td>Spindles blurred</td></tr>
+<tr><td>Remove coarse branch</td><td>−7.25%</td><td>Delta waves impaired</td></tr>
+<tr><td>BiLSTM → GRU</td><td>−1.50%</td><td>Minor difference</td></tr>
+<tr><td>Remove attention</td><td>−4.75%</td><td>Explainability lost</td></tr>
+</table></div>
+</section>
+
+<div class="alt"><div><section id="code" style="padding:0">
+<h2>Under the hood</h2>
+<p class="lead">Python modules: <code>data_generator.py</code>, <code>model.py</code>, <code>explainability.py</code>, <code>main.py</code> and a pytest suite.</p>
+<div class="tabs" id="ctabs"></div>
+<pre id="codebox"></pre>
+<p><a class="btn p" href="https://github.com/yogesh07071-netizen/yogesh" target="_blank" rel="noopener">Browse full source on GitHub</a></p>
+</section></div></div>
+
+<section id="report">
+<h2>About the report</h2>
+<div class="two" style="margin-top:20px">
+<div class="card"><h3>Project details</h3><p><b>Title:</b> Explainable Sleep Stage Classification from EEG Signals Using Attention-Based Deep Learning<br><b>Author:</b> Yogesh L (USN 25BTRCM058)<br><b>Guide:</b> Dr. B. Narmada<br><b>Program:</b> B.Tech CSE (CTMA), Jain (Deemed-to-be University), 2026–2027</p></div>
+<div class="card"><h3>Tech stack</h3><p>Python 3.10 · PyTorch · SciPy · NumPy · scikit-learn · Matplotlib · Seaborn</p></div>
+</div>
+<h3 style="margin-top:36px">Frequently asked</h3>
+<details><summary>Why attention instead of Grad-CAM?</summary><p>Attention is built into the model, and the report validates it with deletion tests: masking the top-3 attended tokens drops true-class probability by 0.485, versus 0.061 for random masking.</p></details>
+<details><summary>What data was used?</summary><p>A synthetic AASM-style generator with pink noise, spindles, K-complexes, delta waves and sawtooth waves. Validating on Sleep-EDF and SHHS is listed as future work.</p></details>
+<details><summary>What is planned next?</summary><p>Public clinical databases, multi-modal fusion (airflow, SpO₂, ECG), cross-epoch transformers and INT8 edge deployment.</p></details>
+</section>
+</main>
+<footer>Built for 25PCCS202 Python Programming · Yogesh L · <a href="https://github.com/yogesh07071-netizen/yogesh" target="_blank" rel="noopener">GitHub</a></footer>
+
+<script>
+const $=s=>document.querySelector(s);
+// theme
+$('#theme').onclick=()=>{const r=document.documentElement,d=getComputedStyle(r).getPropertyValue('--bg').trim()==='#fff';r.dataset.theme=d?'dark':'light';draw()};
+// reveal + counters
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.15});
+document.querySelectorAll('.reveal').forEach(e=>io.observe(e));
+document.querySelectorAll('[data-n]').forEach(el=>{const n=+el.dataset.n,d=+el.dataset.d,s=el.dataset.s||'';let st=null;
+const f=t=>{st=st||t;const p=Math.min((t-st)/1200,1);el.textContent=(n*(1-Math.pow(1-p,3))).toFixed(d)+s;if(p<1)requestAnimationFrame(f)};requestAnimationFrame(f)});
+// scroll spy
+const links=[...document.querySelectorAll('nav a')];
+const spy=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id))}),{rootMargin:'-40% 0px -55% 0px'});
+links.forEach(l=>spy.observe(document.querySelector(l.getAttribute('href'))));
+// demo data
+const ST={
+Wake:{b:[8,10,52,30],f:[10,16],a:[.1,.9],txt:'Posterior alpha (9–11 Hz) with beta activity. Attention peaks at t≈18.0 s on sustained alpha bursts.',conf:97.1},
+N1:{b:[18,52,20,10],f:[5.5],a:[.3,.6],txt:'Low-amplitude theta replaces alpha. Attention is diffuse; ambiguous with REM when EOG is subtle.',conf:90.3},
+N2:{b:[16,32,10,42],f:[6,13],a:[.45,.5],txt:'Sleep spindle (12–14 Hz) and K-complex detected. Attention peaks at t≈14.2 s.',conf:95.8},
+N3:{b:[84,10,3,3],f:[1.2],a:[.5,.2],txt:'High-amplitude delta slow waves (0.5–2 Hz) fill the epoch. Attention is broad and steady.',conf:99.2},
+REM:{b:[14,50,8,28],f:[5.5,3],a:[.7,.4],txt:'Desynchronized theta/sawtooth activity with eye movement. Attention locks to the EOG saccade intervals.',conf:94.1}};
+const names=Object.keys(ST);let cur='N2';
+const tabs=$('#tabs');names.forEach(n=>{const b=document.createElement('button');b.className='tab';b.textContent=n;b.onclick=()=>{cur=n;draw()};tabs.append(b)});
+function rnd(i){const x=Math.sin(i*127.1)*43758.5;return x-Math.floor(x)}
+function draw(){
+ document.querySelectorAll('#tabs .tab').forEach(t=>t.classList.toggle('on',t.textContent===cur));
+ const s=ST[cur],cv=$('#cv'),g=cv.getContext('2d'),W=cv.width,H=cv.height,cs=getComputedStyle(document.documentElement);
+ const tx=cs.getPropertyValue('--tx2').trim(),bl=cs.getPropertyValue('--blue').trim();
+ g.clearRect(0,0,W,H);
+ const pk=cur==='N2'?.47:s.a[1]*.9+.05;
+ // attention ribbon
+ for(let x=0;x<W;x++){const t=x/W,a=Math.exp(-Math.pow((t-pk)/.07,2))*.8+.15+.1*Math.sin(t*40);g.fillStyle=`rgba(234,67,53,${Math.max(0,a)*.35})`;g.fillRect(x,0,1,H)}
+ g.strokeStyle=bl;g.lineWidth=1.5;g.beginPath();
+ for(let x=0;x<W;x++){const t=x/W*30;let v=0;s.f.forEach((f,i)=>v+=Math.sin(2*Math.PI*f*t)*(cur==='N3'?60:22)/(i+1));
+  v+=(rnd(x)-.5)*14;if(cur==='N2'&&Math.abs(t-14.2)<.6)v+=Math.sin(2*Math.PI*13*t)*45*Math.exp(-Math.pow((t-14.2)/.3,2));
+  const y=H/2-v*.9;x?g.lineTo(x,y):g.moveTo(x,y)}
+ g.stroke();
+ g.fillStyle=tx;g.font='12px Roboto';g.fillText('EEG Fpz-Cz (simulated)  ·  red = attention αt',10,16);
+ for(let i=0;i<=6;i++)g.fillText(i*5+'s',i*(W-30)/6+8,H-6);
+ const bn=['Delta','Theta','Alpha','Beta'];
+ $('#bands').innerHTML=bn.map((n,i)=>`<div class="bar"><span>${n}</span><div><i style="width:${s.b[i]}%"></i></div><span>${s.b[i]}%</span></div>`).join('');
+ $('#pred').textContent=`Predicted: ${cur} (${s.conf}% confidence)`;$('#narr').textContent=s.txt;
+}
+// bar charts
+function bars(id,labels,vals,max,fmt,col){const c=$(id),g=c.getContext('2d'),W=c.width,H=c.height,cs=getComputedStyle(document.documentElement),tx=cs.getPropertyValue('--tx2').trim();
+ g.clearRect(0,0,W,H);const bw=W/labels.length;g.font='11px Roboto';g.textAlign='center';
+ vals.forEach((v,i)=>{const h=v/max*(H-50);g.fillStyle=col[i%col.length];g.fillRect(i*bw+bw*.2,H-30-h,bw*.6,h);g.fillStyle=tx;g.fillText(fmt(v),i*bw+bw/2,H-34-h);g.fillText(labels[i],i*bw+bw/2,H-12)})}
+function charts(){
+ bars('#c1',['CNN','LSTM','BiLSTM','CNN+BiL','Ours'],[83.5,81.25,86.75,90.25,95],100,v=>v+'%',['#9aa0a6','#9aa0a6','#9aa0a6','#9aa0a6','#1a73e8']);
+ bars('#c2',['Att k=1','Rnd k=1','Att k=3','Rnd k=3','Att k=5','Rnd k=5'],[.241,.024,.485,.061,.682,.108],.75,v=>v.toFixed(2),['#ea4335','#9aa0a6']);
+}
+const _d=draw;draw=function(){_d();charts()};
+// code viewer
+const CODE={
+'model.py':`<span class="k">class</span> TemporalAttention(nn.Module):
+    <span class="s">"""Additive self-attention over 46 tokens."""</span>
+    <span class="k">def</span> __init__(self, hidden_dim):
+        super().__init__()
+        self.projection = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim // 2),
+            nn.Tanh(),
+            nn.Linear(hidden_dim // 2, 1, bias=False))
+
+    <span class="k">def</span> forward(self, h):
+        energy = self.projection(h)
+        w = F.softmax(energy.squeeze(-1), dim=-1)
+        ctx = torch.bmm(w.unsqueeze(1), h).squeeze(1)
+        <span class="k">return</span> ctx, w`,
+'explainability.py':`<span class="k">def</span> correlate_attention_with_bands(sig, attn, fs=100):
+    f, t, power = compute_stft_spectrogram(sig, fs)
+    <span class="c"># interpolate 46 attention weights onto STFT frames</span>
+    t_attn = np.linspace(0, t[-1], len(attn))
+    w = np.interp(t, t_attn, attn)
+    w /= w.sum() + 1e-8
+    scores = {}
+    <span class="k">for</span> name, (lo, hi) <span class="k">in</span> FREQUENCY_BANDS.items():
+        m = (f >= lo) & (f <= hi)
+        scores[name] = float(np.sum(w * power[m].sum(axis=0)))
+    total = sum(scores.values()) + 1e-8
+    <span class="k">return</span> {k: v / total <span class="k">for</span> k, v <span class="k">in</span> scores.items()}`,
+'data_generator.py':`<span class="k">def</span> filter_eeg_signals(x, fs=100, lowcut=0.5, highcut=40.0):
+    <span class="s">"""Zero-phase 4th-order Butterworth bandpass."""</span>
+    ny = 0.5 * fs
+    b, a = signal.butter(4, [lowcut / ny, highcut / ny], btype=<span class="s">'band'</span>)
+    <span class="k">return</span> signal.filtfilt(b, a, x, axis=-1)
+
+<span class="k">def</span> inject_sleep_spindle(duration=1.0, fs=100, freq=13.0, amplitude=40.0):
+    n = int(duration * fs)
+    t = np.linspace(-1, 1, n)
+    <span class="k">return</span> amplitude * np.exp(-4 * t**2) * np.sin(
+        2 * np.pi * freq * np.linspace(0, duration, n))`,
+'tests':`<span class="k">def</span> test_tc02_attention_sum_to_one():
+    layer = TemporalAttention(hidden_dim=128)
+    _, w = layer(torch.randn(4, 46, 128))
+    <span class="k">assert</span> w.shape == (4, 46)
+    <span class="k">assert</span> torch.allclose(w.sum(-1), torch.ones(4), atol=1e-5)`};
+const ct=$('#ctabs');Object.keys(CODE).forEach((k,i)=>{const b=document.createElement('button');b.className='tab'+(i?'':' on');b.textContent=k;
+ b.onclick=()=>{document.querySelectorAll('#ctabs .tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('#codebox').innerHTML=CODE[k]};ct.append(b)});
+$('#codebox').innerHTML=CODE['model.py'];
+// ---- lab ----
+const L=(a,b,t)=>a+(b-a)*t;
+function interp(xs,ys,x){for(let i=1;i<xs.length;i++)if(x<=xs[i])return L(ys[i-1],ys[i],(x-xs[i-1])/(xs[i]-xs[i-1]));return ys[ys.length-1]}
+let mode='a';
+[['#m1','a'],['#m2','r']].forEach(([id,m])=>$(id).onclick=()=>{mode=m;$('#m1').classList.toggle('on',m==='a');$('#m2').classList.toggle('on',m==='r');lab()});
+$('#noise').oninput=$('#kk').oninput=()=>lab();
+function lab(){
+ const n=+$('#noise').value,bl=getComputedStyle(document.documentElement).getPropertyValue('--blue').trim(),c=$('#cn'),g=c.getContext('2d'),W=c.width,H=c.height;
+ g.clearRect(0,0,W,H);g.strokeStyle=bl;g.lineWidth=1.3;g.beginPath();
+ for(let x=0;x<W;x++){const v=Math.sin(x/W*30*7.5)*50+(rnd(x*3)-.5)*n*3,y=H/2-v*.8;x?g.lineTo(x,y):g.moveTo(x,y)}g.stroke();
+ const X=[0,10,25,50],acc=interp(X,[95,93.25,89.5,84],n),f1=interp(X,[.95,.931,.892,.835],n),snr=interp(X,[25,15,8,2],n);
+ $('#nv').textContent='+'+n+' µV';
+ $('#nres').innerHTML=`SNR <b>${snr.toFixed(1)} dB</b> · accuracy <b>${acc.toFixed(2)}%</b> · macro F1 <b>${f1.toFixed(3)}</b>`;
+ const k=+$('#kk').value,d=mode==='a'?interp([0,1,3,5],[0,.241,.485,.682],k):interp([0,1,3,5],[0,.024,.061,.108],k),p=.958-d;
+ $('#kv').textContent=k;$('#pb').style.width=p*100+'%';
+ $('#pt').innerHTML=`P(true class) = <b>${p.toFixed(3)}</b> (drop ${d.toFixed(3)})`;
+}
+const M=[[100,0,0,0,0],[6.3,87.5,0,0,6.2],[0,6.2,93.8,0,0],[0,0,0,100,0],[0,5.9,0,0,94.1]];
+(()=>{const cm=$('#cm');cm.innerHTML='<div class="h"></div>'+names.map(n=>`<div class="h">${n}</div>`).join('');
+ M.forEach((r,i)=>{cm.insertAdjacentHTML('beforeend',`<div class="h">${names[i]}</div>`);r.forEach((v,j)=>{const e=document.createElement('div');e.textContent=v?v.toFixed(1):'·';e.style.background=`color-mix(in srgb,var(--blue) ${v}%,transparent)`;e.style.color=v>60?'#fff':'var(--tx)';e.onmouseenter=()=>$('#ct').textContent=`True ${names[i]} → predicted ${names[j]}: ${v.toFixed(1)}%`;cm.append(e)})})})();
+const _d2=draw;draw=function(){_d2();lab()};
+// ---- autoplay ----
+let timer=null;
+function auto(){if(timer){clearInterval(timer);timer=null}else timer=setInterval(()=>{cur=names[(names.indexOf(cur)+1)%5];draw()},2500);ap.textContent=timer?'⏸ Pause':'▶ Autoplay'}
+const ap=document.createElement('button');ap.className='tab';ap.textContent='▶ Autoplay';ap.onclick=auto;tabs.append(ap);
+// ---- copy code ----
+const cp=document.createElement('button');cp.className='tab';cp.textContent='Copy';
+cp.onclick=()=>{const t=$('#codebox').textContent;try{navigator.clipboard.writeText(t).then(()=>{cp.textContent='Copied ✓';setTimeout(()=>cp.textContent='Copy',1500)})}catch(e){cp.textContent='Select & copy'}};ct.append(cp);
+// ---- progress bar ----
+addEventListener('scroll',()=>{const h=document.documentElement;$('#prog').style.width=(h.scrollTop/Math.max(1,h.scrollHeight-h.clientHeight)*100)+'%'},{passive:true});
+// ---- command palette ----
+const acts=[...links.map(l=>({t:l.textContent,s:'Go to section',f:()=>document.querySelector(l.getAttribute('href')).scrollIntoView()})),
+ {t:'Toggle theme',s:'Action',f:()=>$('#theme').click()},{t:'Toggle demo autoplay',s:'Action',f:auto},
+ {t:'Open GitHub repo',s:'Link',f:()=>window.open('https://github.com/yogesh07071-netizen/yogesh','_blank')}];
+let sel=0,shown=[];
+function renderPal(){const q=$('#pi').value.toLowerCase();shown=acts.filter(a=>a.t.toLowerCase().includes(q));sel=Math.min(sel,Math.max(0,shown.length-1));
+ $('#pl').innerHTML=shown.map((a,i)=>`<div class="pit${i===sel?' on':''}" data-i="${i}">${a.t}<small>${a.s}</small></div>`).join('')||'<div class="pit">No results</div>'}
+function openPal(){$('#pal').hidden=false;$('#pi').value='';sel=0;renderPal();$('#pi').focus()}
+function closePal(){$('#pal').hidden=true}
+function run(i){const a=shown[i];if(a){closePal();a.f()}}
+$('#sb').onclick=openPal;$('#pi').oninput=()=>{sel=0;renderPal()};
+$('#pl').onclick=e=>{const el=e.target.closest('.pit');if(el&&el.dataset.i)run(+el.dataset.i)};
+$('#pal').onclick=e=>{if(e.target.id==='pal')closePal()};
+addEventListener('keydown',e=>{
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#pal').hidden?openPal():closePal();return}
+ if(!$('#pal').hidden){if(e.key==='Escape')closePal();else if(e.key==='ArrowDown'){sel=Math.min(sel+1,shown.length-1);renderPal();e.preventDefault()}else if(e.key==='ArrowUp'){sel=Math.max(sel-1,0);renderPal();e.preventDefault()}else if(e.key==='Enter')run(sel);return}
+ if(/^[1-5]$/.test(e.key)&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){cur=names[+e.key-1];draw()}
+});
+// ---- playground: filter ----
+function fdraw(){
+ const fl=+$('#fl').value,fh=+$('#fh').value,z=$('#fz').checked?2:1,c=$('#cf'),g=c.getContext('2d'),W=c.width,H=c.height,cs=getComputedStyle(document.documentElement),v=k=>cs.getPropertyValue(k).trim();
+ const mag=f=>{f=Math.max(f,1e-3);return z*20*Math.log10(1/Math.sqrt(1+Math.pow(fl/f,8))/Math.sqrt(1+Math.pow(f/fh,8)))};
+ g.clearRect(0,0,W,H);g.strokeStyle=v('--line');g.fillStyle=v('--tx2');g.font='11px Roboto';g.lineWidth=1;
+ [0,-20,-40,-60,-80].forEach(d=>{const y=10+(-d/80)*(H-30);g.beginPath();g.moveTo(34,y);g.lineTo(W,y);g.stroke();g.fillText(d,2,y+4)});
+ [0,10,20,30,40,50,60].forEach(f=>g.fillText(f+'Hz',30+f/60*(W-50),H-4));
+ g.fillStyle=v('--red');[50,60].forEach(f=>g.fillRect(34+f/60*(W-40)-1,10,2,H-30));
+ g.strokeStyle=v('--blue');g.lineWidth=2;g.beginPath();
+ for(let x=0;x<=W-40;x++){const y=10+Math.min(80,-mag(x/(W-40)*60))/80*(H-30);x?g.lineTo(34+x,y):g.moveTo(34,y)}g.stroke();
+ const q=f=>{const a=-mag(f);return a>80?'>80':a.toFixed(1)};
+ $('#flv').textContent=fl+' Hz';$('#fhv').textContent=fh+' Hz';
+ $('#fres').innerHTML=`Attenuation: 0.1 Hz <b>${q(.1)} dB</b> · 50 Hz <b>${q(50)} dB</b> · 60 Hz <b>${q(60)} dB</b> (red lines = mains hum)`;
+}
+['#fl','#fh','#fz'].forEach(s=>$(s).oninput=fdraw);
+// ---- playground: quiz ----
+let qs=null,sc=0,tt=0,stk=0,done=false;
+function newQ(){
+ qs=names[Math.floor(Math.random()*5)];done=false;const ph=Math.random()*50,s=ST[qs],c=$('#cq'),g=c.getContext('2d'),W=c.width,H=c.height;
+ g.clearRect(0,0,W,H);g.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--blue').trim();g.lineWidth=1.4;g.beginPath();
+ for(let x=0;x<W;x++){const t=x/W*30;let a=0;s.f.forEach((f,i)=>a+=Math.sin(2*Math.PI*f*t+ph)*(qs==='N3'?60:22)/(i+1));a+=(rnd(x+ph*9)-.5)*14;
+  if(qs==='N2'&&Math.abs(t-14.2)<.6)a+=Math.sin(2*Math.PI*13*t)*45*Math.exp(-Math.pow((t-14.2)/.3,2));
+  const y=H/2-a*.9;x?g.lineTo(x,y):g.moveTo(x,y)}g.stroke();
+ $('#qf').textContent='';$('#qo').innerHTML='';
+ names.forEach(n=>{const b=document.createElement('button');b.className='tab';b.textContent=n;b.onclick=()=>{if(done)return;done=true;tt++;
+  const ok=n===qs;if(ok){sc++;stk++;b.classList.add('ok')}else{stk=0;b.classList.add('bad');[...$('#qo').children].find(x=>x.textContent===qs).classList.add('ok')}
+  $('#qf').textContent=(ok?'Correct! ':'It was '+qs+'. ')+s.txt;$('#qs').textContent=`Score ${sc}/${tt} · streak ${stk}`};$('#qo').append(b)});
+}
+$('#qn').onclick=newQ;
+// ---- playground: token masking ----
+const masked=new Set();
+function tw(){const pk={Wake:.6,N1:.45,N2:.47,N3:.5,REM:.7}[cur],sp={N2:.05,N3:.3,N1:.25,Wake:.12,REM:.1}[cur],o=names.indexOf(cur)*50;
+ const w=[...Array(46)].map((_,i)=>.15+Math.exp(-Math.pow((i/45-pk)/sp,2))*(1+.3*rnd(i+o)));const t=w.reduce((a,b)=>a+b);return w.map(x=>x/t)}
+function tok(){
+ const w=tw(),mx=Math.max(...w);
+ $('#tg').innerHTML=w.map((x,i)=>`<div class="tk${masked.has(i)?' m':''}" data-i="${i}" title="t=${(i*30/46).toFixed(1)}s  α=${x.toFixed(3)}" style="background:color-mix(in srgb,var(--red) ${Math.round(x/mx*100)}%,var(--surf))"></div>`).join('');
+ let m=0;masked.forEach(i=>m+=w[i]);const p=.958*(1-Math.min(.95,m*2.2));
+ $('#ti').innerHTML=`${masked.size} masked · attention mass removed <b>${(m*100).toFixed(1)}%</b> → est. P(${cur}) <b>${p.toFixed(3)}</b> (illustrative)`;
+}
+$('#tg').onclick=e=>{const el=e.target.closest('.tk');if(!el)return;const i=+el.dataset.i;masked.has(i)?masked.delete(i):masked.add(i);tok()};
+$('#mt3').onclick=()=>{masked.clear();tw().map((v,i)=>[v,i]).sort((a,b)=>b[0]-a[0]).slice(0,3).forEach(a=>masked.add(a[1]));tok()};
+$('#mr').onclick=()=>{masked.clear();tok()};
+// ---- playground: pipeline stepper ----
+const ps=[['1 · Load epoch','(3, 3000)'],['2 · Filter + Z-score','(3, 3000)'],['3 · Multi-scale CNN','(46, 128)'],['4 · BiLSTM + attention','α ∈ ℝ⁴⁶'],['5 · STFT attribution','4 bands + report']];
+$('#pf').innerHTML=ps.map(p=>`<div class="node"><b>${p[0]}</b>${p[1]}</div>`).join('');
+ $('#run').onclick=()=>{const ns=[...document.querySelectorAll('#pf .node')];ns.forEach(n=>n.classList.remove('act'));$('#pr').textContent='Running…';
+ ns.forEach((n,i)=>setTimeout(()=>{ns.forEach(x=>x.classList.remove('act'));n.classList.add('act');
+  if(i===4)setTimeout(()=>{ns.forEach(x=>x.classList.remove('act'));$('#pr').innerHTML=`Predicted <b>${cur}</b> · ${ST[cur].conf}% confidence · 21.2 ms. ${ST[cur].txt}`},700)},i*700))};
+const _d3=draw;draw=function(){_d3();tok();fdraw()};
+newQ();
+draw();addEventListener('resize',draw);
+</script>
+</body>
+</html>
